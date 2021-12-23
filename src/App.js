@@ -1,4 +1,4 @@
-import {useState} from "react"
+import {useState, useEffect} from "react"
 import Sidebar from "./components/Sidebar"
 import Editor from "./components/Editor"
 import { data } from "./data"
@@ -19,7 +19,11 @@ export default function App() {
      *    into a real JS array.
      */
     
-    const [notes, setNotes] = useState([])
+  const [notes, setNotes] = useState(() => {
+    const saved = localStorage.getItem('notes')
+    const initialValue = JSON.parse(saved)
+    return initialValue || ""
+    })
     const [currentNoteId, setCurrentNoteId] = useState((notes[0] && notes[0].id) || "")
     
     function createNewNote() {
@@ -44,7 +48,10 @@ export default function App() {
             return note.id === currentNoteId
         }) || notes[0]
     }
-    
+  useEffect(() => {
+      localStorage.setItem('notes',JSON.stringify(notes))
+    },[notes])
+  
     return (
         <main>
         {
