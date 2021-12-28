@@ -8,23 +8,11 @@ import { nanoid } from "nanoid"
 import './style.css'
 
 export default function App() {
-    /**
-     * Challenge:
-     * 1. Every time the `notes` array changes, save it 
-     *    in localStorage. You'll need to use JSON.stringify()
-     *    to turn the array into a string to save in localStorage.
-     * 2. When the app first loads, initialize the notes state
-     *    with the notes saved in localStorage. You'll need to
-     *    use JSON.parse() to turn the stringified array back
-     *    into a real JS array.
-     */
     
-  const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem('notes')
-    const initialValue = JSON.parse(saved)
-    return initialValue || ""
-    })
-    const [currentNoteId, setCurrentNoteId] = useState((notes[0] && notes[0].id) || "")
+                                    //lazy loading 
+  const [notes, setNotes] = useState(() => JSON.parse(localStorage.getItem('notes')) || [])
+  
+  const [currentNoteId, setCurrentNoteId] = useState((notes[0] && notes[0].id) || "")
     
     function createNewNote() {
         const newNote = {
@@ -36,11 +24,15 @@ export default function App() {
     }
     
     function updateNote(text) {
-        setNotes(oldNotes => oldNotes.map(oldNote => {
-            return oldNote.id === currentNoteId
-                ? { ...oldNote, body: text }
-                : oldNote
-        }))
+        setNotes(oldNotes => {
+            const newArr = []
+            for (let i = 0; i < oldNotes.length; i++) {
+                if (oldNotes[i].id === currentNoteId) {
+                    newArr.unshift({ ...oldNotes[i], body: text })
+                }else{newArr.push(oldNotes[i])}
+            }
+            return newArr
+        })
     }
     
     function findCurrentNote() {
@@ -48,9 +40,18 @@ export default function App() {
             return note.id === currentNoteId
         }) || notes[0]
     }
+  
+    function deleteNote(event, noteId) {
+        event.stopPropagation()
+        setNotes(oldNotes => oldNotes.filter((note) => note.id !== noteId))
+    }
+
   useEffect(() => {
-      localStorage.setItem('notes',JSON.stringify(notes))
-    },[notes])
+    localStorage.setItem('notes', JSON.stringify(notes))
+  }, [notes])
+  
+  
+  
   
     return (
         <main>
@@ -63,9 +64,10 @@ export default function App() {
             >
                 <Sidebar
                     notes={notes}
-                    currentNote={findCurrentNote()}
+                    currentNote={findCurrentNote}
                     setCurrentNoteId={setCurrentNoteId}
                     newNote={createNewNote}
+                    deleteNote={deleteNote}
                 />
                 {
                     currentNoteId && notes.length > 0 &&
